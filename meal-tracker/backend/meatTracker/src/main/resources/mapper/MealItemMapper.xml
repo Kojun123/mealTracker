@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.mealTracker.mapper.MealItemMapper">
+
+    <insert id="insertItem" parameterType="com.example.mealTracker.dto.MealItem" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO meal_item (session_id, name, count, calories, protein, assumption)
+        VALUES (#{sessionId}, #{name}, #{count}, #{calories}, #{protein}, #{assumption})
+    </insert>
+
+    <select id="findItemsBySessionId" resultType="com.example.mealTracker.dto.MealItem">
+        SELECT id, session_id, name, count, calories, protein, assumption, created_at
+        FROM meal_item
+        WHERE session_id = #{sessionId}
+        ORDER BY id ASC
+    </select>
+
+    <select id="findSummaryBySessionId" resultType="com.example.mealTracker.dto.TodaySummary">
+        SELECT
+        COALESCE(SUM(calories), 0) AS total_calories,
+        COALESCE(SUM(protein), 0)  AS total_protein
+        FROM meal_item
+        WHERE session_id = #{sessionId}
+    </select>
+
+    <delete id="deleteItemsBySessionId">
+        DELETE FROM meal_item WHERE session_id = #{sessionId}
+    </delete>
+
+</mapper>

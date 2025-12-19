@@ -1,0 +1,22 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: meal-tracker
+  datasource:
+    url: jdbc:mysql://localhost:3306/meal?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=utf8
+    username: meal
+    password: mealpass
+  jackson:
+    time-zone: Asia/Seoul
+
+mybatis:
+  mapper-locations: classpath:/mapper/**/*.xml
+  type-aliases-package: com.example.mealtracker.domain
+  configuration:
+    map-underscore-to-camel-case: true
+
+openai:
+  apiKey: ${OPENAI_API_KEY}
+  model: gpt-4o-mini
