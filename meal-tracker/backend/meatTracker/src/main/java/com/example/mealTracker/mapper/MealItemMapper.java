@@ -4,6 +4,7 @@ import com.example.mealTracker.dto.MealItem;
 import com.example.mealTracker.dto.TodaySummary;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.mybatis.spring.annotation.MapperScan;
 
 import java.util.List;
 

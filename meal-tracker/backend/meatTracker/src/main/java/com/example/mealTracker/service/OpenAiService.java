@@ -1,6 +1,8 @@
 package com.example.mealTracker.service;
 
 import com.example.mealTracker.dto.MealItem;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,9 +12,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.util.Loggers;
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
@@ -84,14 +83,14 @@ public class OpenAiService {
                     "input", List.of(
                             Map.of("role", "system", "content",
                                     "너는 식단 기록 파서다. 반드시 JSON만 반환한다.\n" +
-                                            "목표는 '대략적인 평균 영양 추정'이다.\n" +
+                                            "목표는 '대략적인 평균 영양 추정'이다. 셀릭스 한개 라고 사용자가 입력시 인터넷에서 셀릭스의 맛마다 다르겠지만 대략적인 영양성분을 파악한뒤 대답한다. 이 추정치는 매번 변경되면 안되고 최대한 고정되어야 한다.(사용자가 셀릭스 입력할 때 마다 값이 바뀌면 곤란하다는 뜻)\n" +
                                             "\n" +
                                             "규칙:\n" +
                                             "- 음식별로 일반적인 1인분/1개 기준을 가정해서 calories/protein을 추정한다.\n" +
                                             "- 사용자가 수량을 말하면 count를 반영해서 calories/protein은 '총합'으로 반환한다.\n" +
                                             "- 수량이 없으면 count=1.\n" +
                                             "- 모호하면 items는 비워도 되고 intent=UNKNOWN으로 하고 assistantText에서 질문해라.\n" +
-                                            "- assistantText에는 추정 기준을 짧게 포함해라. 예: \"닭가슴살 1개=100g 가정\"\n" +
+                                            "- assistantText에는 추정 기준을 짧게 포함해라. 예: \"닭가슴살 1개 대략 150g, 단백질 20g 추정.\"\n" +
                                             "assumption에는 값이 없으면 빈 문자열이라도 넣어야 해" +
                                             "calories/protein은 반드시 숫자여야 하고 count는 integer 값이야"
                             ),

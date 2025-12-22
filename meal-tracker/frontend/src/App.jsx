@@ -1,10 +1,26 @@
-import { useState } from 'react'
+import { useState, useEffect } from "react";
+import dayjs from "dayjs";
 
 function App() {
   const [input, setInput] = useState('')
   const [logs, setLogs] = useState([])
   const [summary, setSummary] = useState(null)
   const [items, setItems] = useState([])
+
+  const loadSummary = async () => {
+    const res = await fetch("/api/meal/getSummary", {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'}
+    });
+    const data = await res.json();
+    setSummary(data.todaySummary);
+    setItems(data.items ?? []);
+  }
+
+  useEffect(() => {
+    // 화면 첫 진입시 실행
+    loadSummary();
+  }, []);
 
   const send = async () => {
       const text = input.trim()
@@ -54,8 +70,8 @@ function App() {
   <div
     style={{
       display: 'grid',
-      gridTemplateColumns: '2fr 1fr 1fr 1fr',
-      gap: 8,
+      gridTemplateColumns: '2fr 1fr 2fr 1fr 4fr',
+      gap: 10,
       marginBottom: 12,
       padding: '8px 0',
       fontWeight: 700
@@ -65,15 +81,17 @@ function App() {
     <div>-</div>
     <div>{Math.round(summary.totalCalories)} kcal</div>
     <div>{Math.round(summary.totalProtein)} g</div>
+    <div>-</div>
   </div>
 )}
 
 
-    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: 8, fontWeight: 700 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 4fr', gap: 10, fontWeight: 700 }}>
       <div>음식</div>
       <div>수량</div>
       <div>칼로리</div>
       <div>단백질</div>
+      <div>시간</div>
     </div>
 
     <div style={{ marginTop: 8 }}>
@@ -82,8 +100,8 @@ function App() {
           key={idx}
           style={{
             display: 'grid',
-            gridTemplateColumns: '2fr 1fr 1fr 1fr',
-            gap: 8,
+            gridTemplateColumns: '2fr 1fr 1fr 1fr 4fr',
+            gap: 10,
             padding: '6px 0',
             borderTop: '1px solid #eee'
           }}
@@ -92,6 +110,8 @@ function App() {
           <div>x{it.count}</div>
           <div>{Math.round(it.calories)}</div>
           <div>{Math.round(it.protein)}</div>
+          <div>{it.createdAt ? dayjs(it.createdAt).format("YYYY-MM-DD HH:mm") : "-"} </div>
+          <div>{/*new Date(it.createdAt).toLocaleString("ko-KR")*/}</div>
         </div>
       ))}
     </div>
@@ -120,7 +140,7 @@ function App() {
         </button>
       </div>
 
-        <div style={{marginTop: 20}}>
+        <div style={{marginTop: 20, whiteSpace: "pre-line"}}>
           {logs.map((log, idx) => (
             <div key={idx} style={{marginBottom: 8}}>
               <b>

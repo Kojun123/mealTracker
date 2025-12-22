@@ -1,14 +1,17 @@
 package com.example.mealTracker.service;
 
-import com.example.mealTracker.dto.MealSession;
-import com.example.mealTracker.dto.*;
+import com.example.mealTracker.dto.MealItem;
+import com.example.mealTracker.dto.MealMessageRequest;
+import com.example.mealTracker.dto.MealMessageResponse;
+import com.example.mealTracker.dto.TodaySummary;
 import com.example.mealTracker.mapper.MealItemMapper;
 import com.example.mealTracker.mapper.MealSessionMapper;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.JsonNode;
 
 import java.time.Clock;
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
 
@@ -22,7 +25,7 @@ public class MealService {
     private final MealItemMapper mealItemMapper;
     private final MealSessionMapper mealSessionMapper;
 
-    private final Clock clock = Clock.system(ZoneId.of("Asia/Seoul"));
+    Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public MealService(OpenAiService openAiService, MealItemMapper mealItemMapper, MealSessionMapper mealSessionMapper) {
         this.openAiService = openAiService;
@@ -31,7 +34,6 @@ public class MealService {
     }
 
     public MealMessageResponse handle(MealMessageRequest req, Long sessionId) {
-        rolloverIfNeeded();
 
         String msg = req.message() == null ? "" : req.message().trim();
         if (msg.isBlank()) {
@@ -40,7 +42,7 @@ public class MealService {
 
         JsonNode action = openAiService.parseMealAction(msg);
 
-        String intent = action.path("intent").asText("UNKNOWN");
+         String intent = action.path("intent").asText("UNKNOWN");
         String assistantText = action.path("assistantText").asText("처리 실패");
         JsonNode itemsNode = action.path("items");
 
@@ -60,7 +62,7 @@ public class MealService {
                     double calories = it.path("calories").asDouble(0);
                     double protein = it.path("protein").asDouble(0);
 
-                    upsertTotal(name, count, calories, protein, sessionId);
+                    InsertItem(name, count, calories, protein, sessionId);
                 }
                 return build(assistantText, sessionId);
                 }
@@ -69,29 +71,12 @@ public class MealService {
         return build(assistantText, sessionId);
     }
 
-    private void rolloverIfNeeded() {
-        LocalDate today = LocalDate.now(clock);
+    private void InsertItem(String name, int addCount, double addCal, double addPro, long sessionId) {
+       MealItem item = new MealItem(name, addCount, addCal, addPro, sessionId);
+       mealItemMapper.insertItem(item);
     }
 
-    private void upsertTotal(String name, int addCount, double addCal, double addPro, long sessionId) {
-        List<MealItem> items = mealItemMapper.findItemsBySessionId(sessionId);
-        for (int i = 0; i < items.size(); i++) {
-            MealItem it = items.get(i);
-            if (it.getName().equals(name)) {
-                items.set(i, new MealItem(
-                        name,
-                        it.getCount() + addCount,
-                        it.getCalories() + addCal,
-                        it.getProtein() + addPro
-                ));
-                return;
-            }
-        }
-        items.add(new MealItem(name, addCount, addCal, addPro));
-    }
-
-
-    private MealMessageResponse build(String assistantText, long sessionId) {
+    public MealMessageResponse build(String assistantText, long sessionId) {
         TodaySummary summary = calcSummary(sessionId);
         return new MealMessageResponse(
                 assistantText + "\n" + remainText(summary),
@@ -116,7 +101,8 @@ public class MealService {
         double remainPro = Math.max(0, s.getGoalProtein() - s.getTotalProtein());
         double remainCal = Math.max(0, s.getGoalCalories() - s.getTotalCalories());
 
-        return "남은 단백질 " + Math.round(remainPro) + "/" + Math.round(s.getGoalProtein())
+        return "\n" +
+                "남은 단백질 " + Math.round(remainPro) + "/" + Math.round(s.getGoalProtein())
                 + "\n" +
                 "남은 칼로리 " + Math.round(remainCal) + "/" + Math.round(s.getGoalCalories());
     }

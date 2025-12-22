@@ -10,7 +10,14 @@
     </insert>
 
     <select id="findItemsBySessionId" resultType="com.example.mealTracker.dto.MealItem">
-        SELECT id, session_id, name, count, calories, protein, assumption, created_at
+        SELECT id,
+            session_id as sessionId,
+            name,
+            `count` as count,
+            calories,
+            protein,
+            assumption,
+            created_at as createdAt
         FROM meal_item
         WHERE session_id = #{sessionId}
         ORDER BY id ASC

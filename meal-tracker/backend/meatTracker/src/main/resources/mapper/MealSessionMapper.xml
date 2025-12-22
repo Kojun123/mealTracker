@@ -6,7 +6,7 @@
     <select id="findActiveSessionId" resultType="long">
         SELECT id
         FROM meal_session
-        WHERE ended_at IS NULL
+        WHERE 1=1
         ORDER BY started_at DESC
         LIMIT 1
     </select>

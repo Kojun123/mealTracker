@@ -6,6 +6,7 @@ import com.example.mealTracker.dto.MealMessageResponse;
 import com.example.mealTracker.mapper.MealSessionMapper;
 import com.example.mealTracker.service.MealService;
 import com.example.mealTracker.service.OpenAiService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -22,9 +23,15 @@ public class MealController {
         this.sessionMapper = sessionMapper;
     }
 
-    @PostMapping("/message")
-    public MealMessageResponse message(@RequestBody MealMessageRequest req) {
+    @PostMapping("/getSummary")
+    public ResponseEntity<MealMessageResponse> getSummary() {
         Long sessionId = sessionMapper.findActiveSessionId();
-        return mealService.handle(req, sessionId);
+        return ResponseEntity.ok(mealService.build("", sessionId));
+    }
+
+    @PostMapping("/message")
+    public ResponseEntity<MealMessageResponse> message(@RequestBody MealMessageRequest req) {
+        Long sessionId = sessionMapper.findActiveSessionId();
+        return ResponseEntity.ok(mealService.handle(req, sessionId));
     }
 }

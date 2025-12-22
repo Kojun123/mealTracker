@@ -1,10 +1,12 @@
 package com.example.mealTracker.dto;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
+@NoArgsConstructor
 public class MealItem {
     private Long id;
     private Long sessionId;
@@ -16,10 +18,11 @@ public class MealItem {
     private LocalDateTime createdAt;
 
 
-    public MealItem(String name, int count, double calories, double protein) {
+    public MealItem(String name, int count, double calories, double protein, Long sessionId) {
         this.name = name;
         this.count = count;
         this.calories = calories;
         this.protein = protein;
+        this.sessionId = sessionId;
     }
 }
