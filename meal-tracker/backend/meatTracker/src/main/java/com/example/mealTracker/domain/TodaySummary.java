@@ -1,4 +1,4 @@
-package com.example.mealTracker.dto;
+package com.example.mealTracker.domain;
 
 import lombok.Data;
 
@@ -8,6 +8,7 @@ public class TodaySummary {
     private double totalProtein;
     private double goalCalories;
     private double goalProtein;
+
 
     public TodaySummary(double totalCalories, double totalProtein, double goalCalories, double goalProtein) {
         this.totalCalories = totalCalories;

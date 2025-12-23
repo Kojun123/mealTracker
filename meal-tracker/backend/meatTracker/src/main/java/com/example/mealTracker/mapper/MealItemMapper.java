@@ -1,10 +1,9 @@
 package com.example.mealTracker.mapper;
 
-import com.example.mealTracker.dto.MealItem;
-import com.example.mealTracker.dto.TodaySummary;
+import com.example.mealTracker.domain.MealItem;
+import com.example.mealTracker.domain.TodaySummary;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.mybatis.spring.annotation.MapperScan;
 
 import java.util.List;
 

@@ -1,9 +1,9 @@
 package com.example.mealTracker.service;
 
-import com.example.mealTracker.dto.MealItem;
-import com.example.mealTracker.dto.MealMessageRequest;
-import com.example.mealTracker.dto.MealMessageResponse;
-import com.example.mealTracker.dto.TodaySummary;
+import com.example.mealTracker.domain.MealItem;
+import com.example.mealTracker.domain.MealSession;
+import com.example.mealTracker.domain.TodaySummary;
+import com.example.mealTracker.dto.*;
 import com.example.mealTracker.mapper.MealItemMapper;
 import com.example.mealTracker.mapper.MealSessionMapper;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -11,8 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.time.Clock;
-import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -31,6 +29,18 @@ public class MealService {
         this.openAiService = openAiService;
         this.mealItemMapper = mealItemMapper;
         this.mealSessionMapper = mealSessionMapper;
+    }
+
+    public Long getSessionId() {
+        return mealSessionMapper.findActiveSessionId();
+    }
+
+    public MealSession findSessionInfo(Long sessionId) {
+        return mealSessionMapper.findSessionInfo(sessionId);
+    }
+
+    public List<MealItem> findItemsBySessionId(Long sessionId) {
+        return mealItemMapper.findItemsBySessionId(sessionId);
     }
 
     public MealMessageResponse handle(MealMessageRequest req, Long sessionId) {
@@ -85,7 +95,7 @@ public class MealService {
         );
     }
 
-    private TodaySummary calcSummary(long sessionId) {
+    public TodaySummary calcSummary(long sessionId) {
         double totalCal = 0;
         double totalPro = 0;
 

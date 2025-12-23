@@ -6,53 +6,137 @@ function App() {
   const [logs, setLogs] = useState([])
   const [summary, setSummary] = useState(null)
   const [items, setItems] = useState([])
+  const [session, setSession] = useState(null)
 
-  const loadSummary = async () => {
-    const res = await fetch("/api/meal/getSummary", {
+  const loadDashBoard = async () => {
+    const res = await fetch("/api/meal/today", {
       method: 'POST',
       headers: {'Content-Type': 'application/json'}
     });
     const data = await res.json();
+    console.log('today',data);
     setSummary(data.todaySummary);
     setItems(data.items ?? []);
+    setSession(data.session);
   }
 
   useEffect(() => {
     // 화면 첫 진입시 실행
-    loadSummary();
+    loadDashBoard();
   }, []);
 
-  const send = async () => {
-      const text = input.trim()
-      if(!text) return
-
-      setLogs((prev) => [
-        ...prev,
-        {role: 'user', text}
-      ])
-
-      setInput('')
-
-      const res = await fetch('/api/meal/message', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json' },
-        body: JSON.stringify({message:text})
-      })
-
-      const data = await res.json()
-      console.log('data',data)
-
-      setLogs((prev) => [
-        ...prev,
-        {role: 'assistant', text: data.assistantText}
-      ])
-      setSummary(data.todaySummary)
-      setItems(data.items ?? [])
+    const sendPreset = async (presetText) => {
+    const text = presetText.trim();
+    if (!text) return;
+    await sendText(text);
   }
+
+  const sendText = async (text) => {
+  setLogs((prev) => [...prev, { role: "user", text }]);
+  setInput("");
+
+  const res = await fetch("/api/meal/message", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message: text }),
+  });
+
+  if (!res.ok) {
+    setLogs((prev) => [...prev, { role: "assistant", text: "서버 오류" }]);
+    return;
+  }
+
+  const data = await res.json();
+
+  setLogs((prev) => [...prev, { role: "assistant", text: data.assistantText }]);
+  setSummary(data.todaySummary);
+  setItems(data.items ?? []);
+};
+
+const send = async () => {
+  const text = input.trim();
+  if (!text) return;
+  await sendText(text);
+};
+
+//기록 시작/중단/재개 버튼 함수
+const startSession = async () => {
+  await fetch("/api/meal/session/start", { method: "POST" });
+  reloadSession();
+};
+
+const pauseSession = async () => {
+  await fetch("/api/meal/session/pause", { method: "POST" });
+  reloadSession();
+};
+
+const resumeSession = async () => {
+  await fetch("/api/meal/session/resume", { method: "POST" });
+  reloadSession();
+};
+
+const reloadSession = async () => {
+  const res = await fetch("/api/meal/session/today");
+  const data = await res.json();
+  setSession(data.session);
+};
+
+
+
+  const isActive = session?.status === "ACTIVE";
+  const isPaused = session?.status === "PAUSED";
+  const isClosed = session?.status === "CLOSED";
 
   return (
     <div style={{ padding: 40, maxWidth: 600}}>
       <h1>Meal Tracker</h1>
+      
+    <div
+  style={{
+    border: "1px solid #eee",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  }}
+>
+  <div style={{ fontWeight: 700 }}>
+    {session
+      ? `${isActive ? "🟢" : isPaused ? "⏸" : "⚪"} ${session.statusText}`
+      : "⚪ 기록 없음"}
+  </div>
+
+ <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
+  <button
+    onClick={startSession}
+    disabled={isActive}
+    style={{ opacity: isActive ? 0.4 : 1 }}
+  >
+    기록 시작
+  </button>
+
+  <button
+    onClick={pauseSession}
+    disabled={!isActive}
+    style={{ opacity: !isActive ? 0.4 : 1 }}
+  >
+    기록 중단
+  </button>
+
+  <button
+    onClick={resumeSession}
+    disabled={!isPaused}
+    style={{ opacity: !isPaused ? 0.4 : 1 }}
+  >
+    기록 재개
+  </button>
+</div>
+
+</div>
+
+
 
     {items.length > 0 && (
     <div

@@ -1,4 +1,4 @@
-package com.example.mealTracker.dto;
+package com.example.mealTracker.domain;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

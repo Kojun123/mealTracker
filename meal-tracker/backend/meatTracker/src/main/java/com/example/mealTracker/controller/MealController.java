@@ -1,37 +1,46 @@
 package com.example.mealTracker.controller;
 
 
-import com.example.mealTracker.dto.MealMessageRequest;
-import com.example.mealTracker.dto.MealMessageResponse;
-import com.example.mealTracker.mapper.MealSessionMapper;
+import com.example.mealTracker.domain.MealItem;
+import com.example.mealTracker.domain.MealSession;
+import com.example.mealTracker.domain.TodaySummary;
+import com.example.mealTracker.dto.*;
 import com.example.mealTracker.service.MealService;
-import com.example.mealTracker.service.OpenAiService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/meal")
 public class MealController {
 
     private final MealService mealService;
-    private final MealSessionMapper sessionMapper;
 
-    public MealController(MealService mealService, MealSessionMapper sessionMapper) {
+    public MealController(MealService mealService) {
         this.mealService = mealService;
-        this.sessionMapper = sessionMapper;
     }
 
     @PostMapping("/getSummary")
     public ResponseEntity<MealMessageResponse> getSummary() {
-        Long sessionId = sessionMapper.findActiveSessionId();
+        Long sessionId = mealService.getSessionId();
         return ResponseEntity.ok(mealService.build("", sessionId));
     }
 
     @PostMapping("/message")
     public ResponseEntity<MealMessageResponse> message(@RequestBody MealMessageRequest req) {
-        Long sessionId = sessionMapper.findActiveSessionId();
+        Long sessionId = mealService.getSessionId();
         return ResponseEntity.ok(mealService.handle(req, sessionId));
+    }
+
+    @PostMapping("/today")
+    public ResponseEntity<TodayResponse> today() {
+        Long sessionId = mealService.getSessionId();
+        TodaySummary summary = mealService.calcSummary(sessionId);
+        MealSessionResponse sessionRes = new MealSessionResponse(mealService.findSessionInfo(sessionId));
+        List<MealItem> items = mealService.findItemsBySessionId(sessionId);
+
+        TodayResponse todayResponse = new TodayResponse(sessionRes, summary, items);
+        return ResponseEntity.ok(todayResponse);
     }
 }

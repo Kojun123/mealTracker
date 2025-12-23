@@ -4,12 +4,12 @@
 
 <mapper namespace="com.example.mealTracker.mapper.MealItemMapper">
 
-    <insert id="insertItem" parameterType="com.example.mealTracker.dto.MealItem" useGeneratedKeys="true" keyProperty="id">
+    <insert id="insertItem" parameterType="com.example.mealTracker.domain.MealItem" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO meal_item (session_id, name, count, calories, protein, assumption)
         VALUES (#{sessionId}, #{name}, #{count}, #{calories}, #{protein}, #{assumption})
     </insert>
 
-    <select id="findItemsBySessionId" resultType="com.example.mealTracker.dto.MealItem">
+    <select id="findItemsBySessionId" resultType="com.example.mealTracker.domain.MealItem">
         SELECT id,
             session_id as sessionId,
             name,
@@ -23,7 +23,7 @@
         ORDER BY id ASC
     </select>
 
-    <select id="findSummaryBySessionId" resultType="com.example.mealTracker.dto.TodaySummary">
+    <select id="findSummaryBySessionId" resultType="com.example.mealTracker.domain.TodaySummary">
         SELECT
         COALESCE(SUM(calories), 0) AS total_calories,
         COALESCE(SUM(protein), 0)  AS total_protein

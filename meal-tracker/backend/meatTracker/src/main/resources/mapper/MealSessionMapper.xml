@@ -11,7 +11,16 @@
         LIMIT 1
     </select>
 
-    <insert id="insertSession" parameterType="com.example.mealTracker.dto.MealSession" useGeneratedKeys="true" keyProperty="id">
+    <select id="findSessionInfo" resultType="com.example.mealTracker.domain.MealSession">
+        SELECT *
+        FROM meal_session
+        WHERE 1=1
+        AND id = #{sessionId}
+        ORDER BY started_at DESC
+        LIMIT 1
+    </select>
+
+    <insert id="insertSession" parameterType="com.example.mealTracker.domain.MealSession" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO meal_session(started_at, ended_at)
         VALUES (#{startedAt}, NULL)
     </insert>
