@@ -36,11 +36,7 @@ public class MealController {
     @PostMapping("/today")
     public ResponseEntity<TodayResponse> today() {
         Long sessionId = mealService.getSessionId();
-        TodaySummary summary = mealService.calcSummary(sessionId);
-        MealSessionResponse sessionRes = new MealSessionResponse(mealService.findSessionInfo(sessionId));
-        List<MealItem> items = mealService.findItemsBySessionId(sessionId);
 
-        TodayResponse todayResponse = new TodayResponse(sessionRes, summary, items);
-        return ResponseEntity.ok(todayResponse);
+        return ResponseEntity.ok(mealService.getToday(sessionId));
     }
 }

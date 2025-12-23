@@ -117,5 +117,19 @@ public class MealService {
                 "남은 칼로리 " + Math.round(remainCal) + "/" + Math.round(s.getGoalCalories());
     }
 
+    public TodayResponse getToday(Long sessionId) {
+
+        if (sessionId == null) {
+            return TodayResponse.empty();
+        }
+
+        TodaySummary summary = calcSummary(sessionId);
+        MealSession session = findSessionInfo(sessionId);
+        List<MealItem> items = findItemsBySessionId(sessionId);
+
+        return TodayResponse.of(session, summary, items);
+    }
+
+
 }
 

@@ -19,11 +19,22 @@ public class TodayResponse {
     private TodaySummary summary;
     private List<MealItem> items;
 
-    @Builder
-    public TodayResponse(MealSessionResponse session, TodaySummary summary, List<MealItem> items) {
-        this.session = session;
+    public TodayResponse(MealSessionResponse mealSessionResponse, TodaySummary summary, List<MealItem> items) {
+        this.session = mealSessionResponse;
         this.summary = summary;
         this.items = items;
     }
+
+    public static TodayResponse of(MealSession session, TodaySummary summary, List<MealItem> items) {
+        return new TodayResponse(
+                new MealSessionResponse(session),
+                summary,
+                items
+        );
+    }
+
+   public static TodayResponse empty() {
+       return new TodayResponse(null, null, List.of());
+   }
 
 }

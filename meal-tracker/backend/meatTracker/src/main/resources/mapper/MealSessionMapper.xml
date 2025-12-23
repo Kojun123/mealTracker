@@ -28,7 +28,13 @@
     <update id="endSession">
         UPDATE meal_session
         SET ended_at = NOW()
-        WHERE id = ${id}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateSessionStatus">
+        UPDATE meal_session
+        SET status = #{status}
+        WHERE id = #{sessionId}
     </update>
 
 </mapper>
