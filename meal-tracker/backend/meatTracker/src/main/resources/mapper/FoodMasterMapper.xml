@@ -14,7 +14,20 @@
         confidence
         FROM food_master
         WHERE name = #{name};
-
     </select>
+
+    <select id="findSimilarByName" resultType="com.example.mealTracker.domain.FoodMaster">
+        SELECT
+        id,
+        name,
+        protein,
+        kcal
+        FROM food_master
+        WHERE name LIKE CONCAT('%', #{name}, '%')
+        OR #{name} LIKE CONCAT('%', name, '%')
+        ORDER BY ABS(CHAR_LENGTH(name) - CHAR_LENGTH(#{name}))
+        LIMIT 3
+    </select>
+
 
 </mapper>

@@ -1,10 +1,14 @@
 package com.example.mealTracker.mapper;
 
 import com.example.mealTracker.domain.FoodMaster;
-import com.example.mealTracker.dto.FoodMasterResponse;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 @Mapper
 public interface FoodMasterMapper {
         FoodMaster findByName(String name);
+        List<FoodMaster> findSimilarByName(@Param("name") String name);
+
 }

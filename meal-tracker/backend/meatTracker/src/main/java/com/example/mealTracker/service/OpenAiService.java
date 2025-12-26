@@ -46,7 +46,7 @@ public class OpenAiService {
                     "properties", Map.of(
                             "intent", Map.of(
                                     "type", "string",
-                                    "enum", List.of("LOG_FOOD", "MANUAL_RESET", "END_SUMMARY", "UNKNOWN")
+                                    "enum", List.of("LOG_FOOD", "MANUAL_RESET", "END_SUMMARY", "NEED_CONFIRM")
                             ),
                             "assistantText", Map.of("type", "string","minLength", 1),
                             "items", Map.of(

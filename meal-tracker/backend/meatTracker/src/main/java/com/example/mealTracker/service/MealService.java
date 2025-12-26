@@ -53,13 +53,11 @@ public class MealService {
         }
 
         JsonNode action = openAiService.parseMealAction(msg);
-
         String intent = action.path("intent").asText("UNKNOWN");
         JsonNode itemsNode = action.path("items");
 
         if ("MANUAL_RESET".equals(intent)) {
             // TODO: 실제 reset 로직이 있으면 여기서 수행
-            // 지금은 메시지만 반환
             String assistantText = "수동 초기화 요청 처리";
             return build(assistantText, sessionId);
         }
@@ -71,100 +69,87 @@ public class MealService {
 
         if ("LOG_FOOD".equals(intent)) {
 
-            if (!itemsNode.isArray() || itemsNode.size() == 0) {
-                return build("기록할 음식이 없음. 더 구체적으로 써줘", sessionId);
+            if (!itemsNode.isArray() || itemsNode.isEmpty()) {
+                return build("기록할 음식이 없음", sessionId);
             }
-
-            int totalItems = 0;
-            int dbHits = 0;
-            int estimates = 0;
-            double addedPro = 0;
-            double addedCal = 0;
 
             for (JsonNode it : itemsNode) {
 
-                String rawName = it.path("name").asText("").trim();
+                String rawName = it.path("name").asText();
                 int count = it.path("count").asInt(1);
-                String assumption = it.path("assumption").asText("");
-                String note = it.path("note").asText("");
-
-                if (rawName.isBlank()) {
-                    continue;
-                }
-
                 if (count < 1) count = 1;
 
-                List<String> candidates = new ArrayList<>();
-                JsonNode candidatesNode = it.path("candidates");
-                if (candidatesNode.isArray()) {
-                    for (JsonNode c : candidatesNode) {
-                        candidates.add(c.asText(""));
-                    }
+                String normalized = normalizeName(rawName);
+                TodaySummary summary = calcSummary(sessionId);
+                List<MealItem> items = findItemsBySessionId(sessionId);
+
+                FoodMaster exact = foodMasterMapper.findByName(normalized);
+                if (exact != null) {
+                    continue; // 문제 없음
                 }
 
-                ResolvedNutrition rn = resolveNutrition(rawName, count, assumption, candidates);
+                List<FoodMaster> suggestions =
+                        foodMasterMapper.findSimilarByName(normalized);
 
-                String normalizedName = normalizeName(rawName);
-
-                InsertItem(normalizedName, count, rn.calories(), rn.protein(), sessionId);
-
-                totalItems++;
-                addedPro += rn.protein();
-                addedCal += rn.calories();
-
-                if ("DB".equals(rn.source())) dbHits++;
-                else estimates++;
-
-                // note/assumption/source/confidence를 DB에 같이 저장하려면
-                // InsertItem 시그니처를 확장해서 넣어야 함 (다음 단계)
+                    return MealMessageResponse.needConfirm(
+                            "‘" + rawName + "’는 등록된 음식이 아님",
+                            rawName,
+                            count,
+                            suggestions,
+                            summary,
+                            items
+                    );
             }
 
-            if (totalItems == 0) {
-                return build("기록할 음식이 없음. 입력을 더 구체적으로 써줘", sessionId);
+            int total = 0;
+            double addPro = 0;
+            int dbHits = 0;
+            int estimates = 0;
+
+            for (JsonNode it : itemsNode) {
+
+                String rawName = it.path("name").asText();
+                int count = it.path("count").asInt(1);
+                if (count < 1) count = 1;
+
+                String assumption = it.path("assumption").asText("");
+                String normalized = normalizeName(rawName);
+
+                double calories = 0;
+                double protein = 0;
+                String source;
+
+                FoodMaster fm = foodMasterMapper.findByName(normalized);
+
+
+                if (fm != null) {
+                    protein = fm.getProtein() * count;
+                    calories = fm.getKcal() == null ? 0 : fm.getKcal() * count;
+                    source = "DB";
+                    dbHits++;
+                } else {
+                    EstimateResult est = estimator.estimate(normalized, count);
+                    protein = est.protein();
+                    calories = est.calories();
+                    source = "ESTIMATE";
+                    estimates++;
+                }
+
+                InsertItem(normalized, count, calories, protein, sessionId);
+
+                total++;
+                addPro += protein;
             }
 
-            // 서버가 만드는 메시지 (이게 사용자 가치)
             String assistantText =
-                    totalItems + "개 기록함. " +
-                            "DB " + dbHits + "개, 추정 " + estimates + "개. " +
-                            "이번 +" + Math.round(addedPro) + "g";
+                    total + "개 기록함. DB " + dbHits + "개, 추정 " + estimates + "개. " +
+                            "이번 +" + Math.round(addPro) + "g";
 
             return build(assistantText, sessionId);
         }
-
-        // 3) 그 외
-        return build("무슨 뜻인지 애매함. 예: '셀릭스 1개', '오늘 식단 시작', '오늘 식단 끝'", sessionId);
+        return build("", sessionId);
     }
 
-    record ResolvedNutrition(
-            double calories,
-            double protein,
-            String source,      // DB or ESTIMATE
-            String confidence,  // HIGH or LOW
-            String assumption
-    ) {}
-
-    ResolvedNutrition resolveNutrition(String rawName, int count, String assumptionFromGpt, List<String> candidates) {
-        FoodMaster fm = findFoodMasterByCandidates(rawName, candidates);
-        if (fm != null) {
-            return new ResolvedNutrition(
-                    fm.getKcal() == null ? 0 : fm.getKcal() * count,
-                    fm.getProtein() * count,
-                    "DB",
-                    "HIGH",
-                    assumptionFromGpt
-            );
-        }
-
-        EstimateResult est = estimator.estimate(rawName, count);
-        return new ResolvedNutrition(
-                est.calories(),
-                est.protein(),
-                "ESTIMATE",
-                "LOW",
-                assumptionFromGpt.isBlank() ? est.assumption() : assumptionFromGpt
-        );
-    }
 
     public String normalizeName(String raw) {
         if (raw == null) return "";
@@ -183,7 +168,7 @@ public class MealService {
 
         s = s.trim();
 
-        // 4. 별칭 교정 (핵심)
+        // 4. 별칭 교정
         return aliasMap(s);
     }
 
@@ -202,14 +187,12 @@ public class MealService {
         List<String> list = candidates == null ? List.of() : candidates;
 
         // 1) 우선순위: GPT 후보 -> rawName
-        // 중복 제거를 위해 LinkedHashSet
         java.util.LinkedHashSet<String> pool = new java.util.LinkedHashSet<>();
         for (String c : list) {
             if (c != null && !c.isBlank()) pool.add(c);
         }
         pool.add(rawName);
 
-        // 2) 정규화해서 순회 조회
         for (String c : pool) {
             String key = normalizeName(c);
             if (key.isBlank()) continue;
@@ -232,7 +215,7 @@ public class MealService {
 
     public MealMessageResponse build(String assistantText, long sessionId) {
         TodaySummary summary = calcSummary(sessionId);
-        return new MealMessageResponse(
+        return MealMessageResponse.normal(
                 assistantText + "\n" + remainText(summary),
                 summary,
                 List.copyOf(mealItemMapper.findItemsBySessionId(sessionId))
