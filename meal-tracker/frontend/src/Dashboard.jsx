@@ -105,31 +105,12 @@ useEffect(() => {
     await sendText(text);
   };
 
-  // 기록 시작/중단/재개 버튼 함수
-  const startSession = async () => {
-    await fetch("/api/meal/session/start", { method: "POST", credentials: "include" });
-    reloadSession();
-  };
-
-  const pauseSession = async () => {
-    await fetch("/api/meal/session/end", { method: "POST", credentials: "include" });
-    reloadSession();
-  };
-
-  const resumeSession = async () => {
-    await fetch("/api/meal/session/resume", { method: "POST", credentials: "include" });
-    reloadSession();
-  };
 
   const reloadSession = async () => {
     const res = await fetch("/api/meal/today", { method: "POST", credentials: "include" });
     const data = await res.json();
     setSession(data.session);
   };
-
-  const isActive = session?.status === "ACTIVE";
-  const isPaused = session?.status === "PAUSED";
-  const isClosed = session?.status === "CLOSED";
 
   // needConfirm 버튼 핸들러들
   const handleChooseSuggestion = async (name, count) => {
@@ -203,79 +184,6 @@ useEffect(() => {
           </button>
         </div>
       </header>
-
-      {/* Session bar */}
-      <div className="mt-6 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-2">
-            <span
-              className={[
-                "inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium border",
-                isActive
-                  ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                  : isPaused
-                  ? "bg-amber-50 text-amber-700 border-amber-100"
-                  : "bg-gray-50 text-gray-700 border-gray-200",
-              ].join(" ")}
-            >
-              <span
-                className={[
-                  "h-2 w-2 rounded-full",
-                  isActive ? "bg-emerald-500" : isPaused ? "bg-amber-500" : "bg-gray-400",
-                ].join(" ")}
-              />
-              {session ? session.statusText : "기록 없음"}
-            </span>
-
-            {session?.updatedAt && (
-              <span className="text-sm text-gray-500">
-                {dayjs(session.updatedAt).format("YYYY-MM-DD HH:mm")}
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={startSession}
-              disabled={isActive}
-              className={[
-                "rounded-xl px-4 py-2 text-sm font-semibold",
-                isActive
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-900 text-white hover:bg-gray-800",
-              ].join(" ")}
-            >
-              기록 시작
-            </button>
-
-            <button
-              onClick={pauseSession}
-              disabled={!isActive}
-              className={[
-                "rounded-xl px-4 py-2 text-sm font-semibold",
-                !isActive
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-900 border border-gray-200 hover:bg-gray-50",
-              ].join(" ")}
-            >
-              기록 중단
-            </button>
-
-            <button
-              onClick={resumeSession}
-              disabled={!isPaused}
-              className={[
-                "rounded-xl px-4 py-2 text-sm font-semibold",
-                !isPaused
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-white text-gray-900 border border-gray-200 hover:bg-gray-50",
-              ].join(" ")}
-            >
-              기록 재개
-            </button>
-          </div>
-        </div>
-      </div>
 
       {/* Stats */}
       <section className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
