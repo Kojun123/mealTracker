@@ -1,25 +1,37 @@
 import { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import ManualModal from "./components/ManualModal";
+import GoalSettingModal from "./components/GoalSettingModal";
+import DashboardHeader from "./components/DashboardHeader";
+import StatsCards from "./components/StatsCards";
+import Composer from "./components/Composer";
 import { useNavigate } from "react-router-dom";
 
 
 function Dashboard() {
-  const [input, setInput] = useState("");
-  const [logs, setLogs] = useState([]);
-  const [logsLoaded, setLogsLoaded] = useState(false);
-  const [summary, setSummary] = useState(null);
-  const [items, setItems] = useState([]);
-  const [session, setSession] = useState(null);
-  const [needConfirm, setNeedConfirm] = useState(null);
-  const [user, setUser] = useState(null);
 
-  const navigate = useNavigate();
+const navigate = useNavigate();
 
+// data
+const [user, setUser] = useState(null);
+const [summary, setSummary] = useState(null);
+const [items, setItems] = useState([]);
+const [session, setSession] = useState(null);
 
-  //직접 기록
-  const [manualOpen, setManualOpen] = useState(false);
-  const [manual, setManual] = useState({rawName:"", count:1, protein:"", kcal:""});
+// chat/ui
+const [input, setInput] = useState("");
+const [logs, setLogs] = useState([]);
+const [logsLoaded, setLogsLoaded] = useState(false);
+const [needConfirm, setNeedConfirm] = useState(null);
+
+// modals
+const [manualOpen, setManualOpen] = useState(false);
+const [manual, setManual] = useState({ rawName:"", count:1, protein:"", kcal:"" });
+
+const [goalOpen, setGoalOpen] = useState(false);
+const [targetCalories, setTargetCalories] = useState(2000);
+const [targetProtein, setTargetProtein] = useState(150);
+
 
   const loadDashBoard = async () => {
     const res = await fetch("/api/meal/today", {
@@ -69,6 +81,13 @@ useEffect(() => {
     localStorage.setItem("logs", JSON.stringify(logs));
   }, [logs, logsLoaded]); 
 
+  useEffect(() => {
+  if (!user) return;
+  setTargetCalories(user.targetCalories ?? 2000);
+  setTargetProtein(user.targetProtein ?? 150);
+}, [user]);
+
+
   const sendText = async (text) => {
     const trimmed = (text ?? "").trim();
     if (!trimmed) return;
@@ -116,12 +135,6 @@ useEffect(() => {
   };
 
 
-  const reloadSession = async () => {
-    const res = await fetch("/api/meal/today", { method: "POST", credentials: "include" });
-    const data = await res.json();
-    setSession(data.session);
-  };
-
   // needConfirm 버튼 핸들러들
   const handleChooseSuggestion = async (name, count) => {
     // 선택하면 confirm UI 닫고 재전송
@@ -157,6 +170,34 @@ useEffect(() => {
     }).then(r=>r.json()).then(handleServerResponse);    
   };
 
+  const saveGoal = async() => {
+    const cal = Number(targetCalories);
+    const protein = Number(targetProtein);
+
+    if(!Number.isFinite(cal) || cal <= 0) return;
+    if(!Number.isFinite(protein) || protein <= 0) return;
+
+      const res = await fetch("/api/user/targets", {
+    method: "PUT",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ targetCalories: cal, targetProtein: pro }),
+  });
+
+  if (!res.ok) {
+    // 여기서 토스트나 alert 넣어도 됨
+    return;
+  }
+
+  // 서버 응답을 돌려주면 그걸 쓰고, 아니면 로컬에서 갱신
+  setUser((prev) =>
+    prev ? { ...prev, targetCalories: cal, targetProtein: protein } : prev
+  );
+
+  setGoalOpen(false);
+  }
+
+
   function handleServerResponse(res) {
     setLogs((prev) => [...prev, { role: "assistant", text: res.assistantText }]);
     setSummary(res.todaySummary);
@@ -173,54 +214,31 @@ useEffect(() => {
       onSubmit={submitManual}
     />
 
+    <GoalSettingModal
+      open={goalOpen}
+      targetCalories={targetCalories}
+      setTargetCalories={setTargetCalories}
+      targetProtein={targetProtein}
+      setTargetProtein={setTargetProtein}
+      onClose={() => setGoalOpen(false)}
+      onSave={saveGoal}
+    />
+
     <div className="mx-auto max-w-5xl px-6 py-8">
-      {/* Header */}
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Meal Tracker</h1>
-          <p className="mt-1 text-sm text-gray-500">먹은 거 대충 던지면 기록해주는 앱</p>
-        </div>
+      <DashboardHeader
+        user={user}
+        onOpenGoal={() => setGoalOpen(true)}
+        onLogout={async () => {
+          await fetch("/auth/logout", {method: "POST", credentials: "include"}).catch(() => {});
+          navigate("/login");
+        }}
+      />
 
-        {user.email} 님
-        <div className="flex items-center gap-3">
-          <button
-            onClick={async () => {
-              await fetch("/auth/logout", { method: "POST", credentials: "include" }).catch(() => {});
-              navigate("/login");
-            }}
-            className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            로그아웃
-          </button>
-        </div>
-      </header>
-
-      {/* Stats */}
-      <section className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-          <div className="text-sm text-gray-500">칼로리</div>
-          <div className="mt-1 text-3xl font-semibold text-gray-900">
-            {summary ? Math.round(summary.totalCalories) : 0} / {user ? Math.round(user.targetCalories) : 0}
-            <span className="ml-2 text-base font-medium text-gray-500">kcal</span>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-          <div className="text-sm text-gray-500">단백질</div>
-          <div className="mt-1 text-3xl font-semibold text-gray-900">
-            {summary ? Math.round(summary.totalProtein) : 0} / {user ? Math.round(user.targetProtein) : 0}
-            <span className="ml-2 text-base font-medium text-gray-500">g</span>
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-          <div className="text-sm text-gray-500">기록</div>
-          <div className="mt-1 text-3xl font-semibold text-gray-900">
-            {items?.length ?? 0}
-            <span className="ml-2 text-base font-medium text-gray-500">items</span>
-          </div>
-        </div>
-      </section>
+      <StatsCards
+        summary={summary}
+        user={user}
+        itemsCount={items?.length ?? 0}
+      />
 
       {/* Items table */}
       <section className="mt-6 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
@@ -297,26 +315,11 @@ useEffect(() => {
           </div>
         )}
 
-        {/* Composer */}
-        <div className="border-t border-gray-100 px-5 py-4">
-          <div className="flex gap-2">
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") send();
-              }}
-              placeholder="ex) 계란 2개  /  닭가슴살 1개"
-              className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm outline-none focus:border-gray-400"
-            />
-            <button
-              onClick={send}
-              className="rounded-xl bg-gray-900 px-4 py-3 text-sm font-semibold text-white hover:bg-gray-800"
-            >
-              전송
-            </button>
-          </div>
-        </div>
+        <Composer
+          input={input}
+          setInput={setInput}
+          onSend={send}
+        />
       </section>
 
       {/* Logs */}
