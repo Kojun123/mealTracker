@@ -21,4 +21,11 @@
         VALUES (#{email}, #{password}, NOW())
     </insert>
 
+    <update id="updateTargets">
+        UPDATE users
+        SET target_calories = #{targetCalories},
+        target_protein = #{targetProtein}
+        WHERE email = #{userId}
+    </update>
+
 </mapper>

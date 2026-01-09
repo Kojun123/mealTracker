@@ -9,4 +9,8 @@ public interface UserMapper {
     MealTrackerUser findByEmail(@Param("email") String email);
 
     void insert(MealTrackerUser user);
+
+    int updateTargets(@Param("userId") String userId,
+                      @Param("targetCalories") int targetCalories,
+                      @Param("targetProtein") int targetProtein);
 }

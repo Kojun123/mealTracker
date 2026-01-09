@@ -113,12 +113,10 @@ useEffect(() => {
     const data = await res.json();
     console.log("data",data);
 
-    // assistantText는 항상 출력
     if (data?.assistantText) {
       setLogs((prev) => [...prev, { role: "assistant", text: data.assistantText }]);
     }
-
-    // summary/items는 NEED_CONFIRM이어도 같이 내려주니까 갱신해도 됨
+    
     setSummary(data.todaySummary);
     setItems(data.items ?? []);
 
@@ -135,7 +133,7 @@ useEffect(() => {
   };
 
 
-  // needConfirm 버튼 핸들러들
+  // needConfirm 버튼 핸들러
   const handleChooseSuggestion = async (name, count) => {
     // 선택하면 confirm UI 닫고 재전송
     setNeedConfirm(null);
@@ -177,22 +175,27 @@ useEffect(() => {
     if(!Number.isFinite(cal) || cal <= 0) return;
     if(!Number.isFinite(protein) || protein <= 0) return;
 
-      const res = await fetch("/api/user/targets", {
+      const res = await fetch("/auth/target", {
     method: "PUT",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ targetCalories: cal, targetProtein: pro }),
+    body: JSON.stringify({ targetCalories: cal, targetProtein: protein }),
   });
 
   if (!res.ok) {
-    // 여기서 토스트나 alert 넣어도 됨
+    alert("저장 실패");
     return;
   }
 
-  // 서버 응답을 돌려주면 그걸 쓰고, 아니면 로컬에서 갱신
-  setUser((prev) =>
-    prev ? { ...prev, targetCalories: cal, targetProtein: protein } : prev
-  );
+    const updated = await res.json().catch(() => null);
+
+  if(updated) {
+     setUser(updated);
+     alert("저장 성공");
+  }
+  else {
+    setUser((prev) => (prev ? { ...prev, targetCalories: cal, targetProtein: protein } : prev));
+  }
 
   setGoalOpen(false);
   }

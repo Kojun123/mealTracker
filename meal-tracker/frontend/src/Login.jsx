@@ -22,8 +22,8 @@ export default function Login() {
       });
 
       console.log("status", res.status);
-console.log("headers", [...res.headers.entries()]);
-console.log("text", await res.text());
+      console.log("headers", [...res.headers.entries()]);
+      console.log("text", await res.text());
 
       if (res.status === 200) {
         navigate("/");
