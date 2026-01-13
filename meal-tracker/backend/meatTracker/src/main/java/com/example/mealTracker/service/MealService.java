@@ -29,9 +29,8 @@ public class MealService {
     private final FoodMasterMapper foodMasterMapper;
     private final UserMapper userMapper;
 
-    public List<MealItem> findItemsBySessionId(String userId) {
-        LocalDate now = LocalDate.now(ZoneId.of("Asia/Seoul"));
-        return mealItemMapper.findItemsByUser(userId, now);
+    public List<MealItem> findItemsBySessionId(String userId, LocalDate date) {
+        return mealItemMapper.findItemsByUser(userId, date);
     }
 
 
@@ -74,7 +73,7 @@ public class MealService {
                 FoodMaster fm = foodMasterMapper.findByName(rawName);
                 if (fm == null) {
                     TodaySummary summary = calcSummary(userId);
-                    List<MealItem> items = findItemsBySessionId(userId);
+                    List<MealItem> items = findItemsBySessionId(userId, LocalDate.now(ZoneId.of("Asia/Seoul")));
                     List<FoodMaster> suggestions = findSimilarByNameJava(rawName, 3);
 
                     return MealMessageResponse.needConfirm(
@@ -152,14 +151,14 @@ public class MealService {
                 "남은 칼로리 " + Math.round(remainCal) + "/" + Math.round(s.getTargetCalories());
     }
 
-    public TodayResponse getToday(String userId) {
+    public TodayResponse getToday(String userId, LocalDate date) {
 
         if (userId == null) {
             return TodayResponse.empty();
         }
 
         TodaySummary summary = calcSummary(userId);
-        List<MealItem> items = findItemsBySessionId(userId);
+        List<MealItem> items = findItemsBySessionId(userId, date);
 
         return TodayResponse.of(summary, items);
     }

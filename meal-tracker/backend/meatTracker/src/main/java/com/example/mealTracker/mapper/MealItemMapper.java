@@ -12,7 +12,7 @@ import java.util.List;
 @Mapper
 public interface MealItemMapper {
     int insertItem(MealItem item);
-    List<MealItem> findItemsByUser(@Param("userId") String userId, @Param("now") LocalDate now);
+    List<MealItem> findItemsByUser(@Param("userId") String userId, @Param("mealDate") LocalDate date);
     TodaySummary findSummaryByUser(@Param("userId") String userId);
     int deleteItemsBySessionId(@Param("uesrId") String userId);
 }

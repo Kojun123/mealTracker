@@ -35,4 +35,5 @@ public class AuthController {
         String userId = user.getUsername();
         return ResponseEntity.ok(userService.updateTargets(userId, vo));
     }
+
 }

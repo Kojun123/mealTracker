@@ -21,7 +21,7 @@
             meal_date as mealDate
         FROM meal_item
         WHERE user_id = #{userId}
-        AND meal_date = #{now}
+        AND meal_date = #{mealDate}
         ORDER BY id ASC
     </select>
 

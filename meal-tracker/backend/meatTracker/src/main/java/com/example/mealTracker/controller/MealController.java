@@ -9,10 +9,10 @@ import com.example.mealTracker.service.MealService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 @RestController
 @RequestMapping("/api/meal")
@@ -31,9 +31,10 @@ public class MealController {
     }
 
     @PostMapping("/today")
-    public ResponseEntity<TodayResponse> today(@AuthenticationPrincipal UserDetails user) {
+    public ResponseEntity<TodayResponse> today(@AuthenticationPrincipal UserDetails user, @RequestParam(required = false) LocalDate date) {
         String userId = user.getUsername();
-        return ResponseEntity.ok(mealService.getToday(userId));
+        if (date == null) date = LocalDate.now(ZoneId.of("Asia/Seoul"));
+        return ResponseEntity.ok(mealService.getToday(userId, date));
     }
 
     @PostMapping("/manual")
