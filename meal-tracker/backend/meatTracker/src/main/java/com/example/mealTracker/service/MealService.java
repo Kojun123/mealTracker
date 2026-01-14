@@ -35,77 +35,69 @@ public class MealService {
 
 
     public MealMessageResponse handle(MealMessageRequest vo, String userId) {
-
         String msg = vo.message() == null ? "" : vo.message().trim();
+
         if (msg.isBlank()) {
             return buildResponse("빈 입력값입니다.", userId);
         }
 
         JsonNode action = openAiService.parseMealAction(msg);
-        String intent = action.path("intent").asText("UNKNOWN");
         JsonNode itemsNode = action.path("items");
 
-        if ("MANUAL_RESET".equals(intent)) {
-            String assistantText = "수동 초기화 요청 처리";
-            return buildResponse(assistantText, userId);
+        if (!itemsNode.isArray() || itemsNode.isEmpty()) {
+            return buildResponse("기록할 음식이 없음", userId);
         }
 
-        if ("END_SUMMARY".equals(intent)) {
-            String assistantText = "오늘 요약 종료";
-            return buildResponse(assistantText, userId);
+        List<String> lines = new ArrayList<>();
+        double addPro = 0;
+        double addCal = 0;
+
+        for (JsonNode it : itemsNode) {
+            String rawName = it.path("name").asText(); // 사용자가 입력한 음식이름
+            int count = it.path("count").asInt(1); // 음식수량
+            if (count < 1) count = 1;
+            int calories = it.path("calories").asInt(0) * count;
+            int protein = it.path("protein").asInt(0) * count;
+
+            //음식이 db에 저장되어 있지 않은 경우 사용자에게 선택지 리턴
+//            FoodMaster fm = foodMasterMapper.findByName(rawName);
+//            if (fm == null) {
+            TodaySummary summary = calcSummary(userId);
+            List<MealItem> items = findItemsBySessionId(userId, LocalDate.now(ZoneId.of("Asia/Seoul")));
+//                List<FoodMaster> suggestions = findSimilarByNameJava(rawName, 3);
+//
+//
+//                return MealMessageResponse.needConfirm(
+//                        String.join("\n", lines) + "\n[" + rawName + "]는 등록된 음식이 아님",
+//                        rawName,
+//                        count,
+//                        suggestions,
+//                        summary,
+//                        items
+//                );
+//            }
+
+            //사용자가 입력한 값이 모호할때 선택지 리턴, note : (true : 모호, false : 모호하지않음)
+//            if (it.path("note").asBoolean()) {
+//                return MealMessageResponse.needConfirm(
+//                        assumption, summary, items
+//                );
+//            }
+
+            InsertItem(rawName, count, calories, protein, userId);
+
+            addPro += protein;
+            addCal += calories;
+
+            lines.add(rawName + " x" + count + " 단백질 : " + protein + " 칼로리 : " + calories);
         }
 
-        if ("LOG_FOOD".equals(intent)) {
+        String assistantText =
+                String.join("\n", action.path("assistantText").asText() )
+                        + "\n총 단백질 : " + addPro
+                        + " 총 칼로리 : " + addCal;
 
-            if (!itemsNode.isArray() || itemsNode.isEmpty()) {
-                return buildResponse("기록할 음식이 없음", userId);
-            }
-
-            List<String> lines = new ArrayList<>();
-            double addPro = 0;
-            double addCal = 0;
-
-            for (JsonNode it : itemsNode) {
-                String rawName = it.path("name").asText();
-                int count = it.path("count").asInt(1);
-                if (count < 1) count = 1;
-
-                FoodMaster fm = foodMasterMapper.findByName(rawName);
-                if (fm == null) {
-                    TodaySummary summary = calcSummary(userId);
-                    List<MealItem> items = findItemsBySessionId(userId, LocalDate.now(ZoneId.of("Asia/Seoul")));
-                    List<FoodMaster> suggestions = findSimilarByNameJava(rawName, 3);
-
-                    return MealMessageResponse.needConfirm(
-                            String.join("\n", lines) + "\n[" + rawName + "]는 등록된 음식이 아님",
-                            rawName,
-                            count,
-                            suggestions,
-                            summary,
-                            items
-                    );
-                }
-
-                double protein = fm.getProtein() * count;
-                double calories = (fm.getKcal() == null ? 0 : fm.getKcal() * count);
-
-                InsertItem(rawName, count, calories, protein, userId);
-
-                addPro += protein;
-                addCal += calories;
-
-                lines.add(rawName + " x" + count + " 단백질 : " + protein + " 칼로리 : " + calories);
-            }
-
-            String assistantText =
-                    String.join("\n", lines)
-                            + "\n총 단백질 : " + addPro
-                            + " 총 칼로리 : " + addCal;
-
-            return buildResponse(assistantText, userId);
-        }
-
-        return buildResponse("", userId);
+        return buildResponse(assistantText, userId);
     }
 
     // 먹은 것 기록.
@@ -146,9 +138,10 @@ public class MealService {
         double remainCal = Math.max(0, s.getTargetCalories() - s.getTotalCalories());
 
         return "\n" +
-                "남은 단백질 " + Math.round(remainPro) + "/" + Math.round(s.getTargetProtein())
+                "남은 단백질 " + Math.round(remainPro) + "g"
                 + "\n" +
-                "남은 칼로리 " + Math.round(remainCal) + "/" + Math.round(s.getTargetCalories());
+                "남은 칼로리 " + Math.round(remainCal) + "kcal"
+                ;
     }
 
     public TodayResponse getToday(String userId, LocalDate date) {

@@ -3,7 +3,6 @@ package com.example.mealTracker.controller;
 
 import com.example.mealTracker.dto.*;
 import com.example.mealTracker.service.MealService;
-import org.apache.coyote.Response;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;

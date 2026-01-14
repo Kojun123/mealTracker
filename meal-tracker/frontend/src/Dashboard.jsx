@@ -336,7 +336,7 @@ const loadDashBoard = async (date) => {
         {needConfirm && (
           <div className="border-t border-amber-100 bg-amber-50 px-5 py-4">
             <div className="text-sm font-semibold text-amber-900">
-              ‘{needConfirm.rawName}’는 등록된 음식이 아닙니다
+              ‘{needConfirm.rawName}’를 
             </div>
 
             <div className="mt-2 text-sm text-amber-900/80">
