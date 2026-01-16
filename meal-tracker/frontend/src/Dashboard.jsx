@@ -7,6 +7,7 @@ import DashboardHeader from "./components/DashboardHeader";
 import StatsCards from "./components/StatsCards";
 import Composer from "./components/Composer";
 import DatePickerChip from "./components/DatePickerChip";
+import Swal from "sweetalert2";
 
 
 function Dashboard() {
@@ -22,7 +23,6 @@ const [session, setSession] = useState(null);
 // chat/ui
 const [input, setInput] = useState("");
 const [logs, setLogs] = useState([]);
-const [needConfirm, setNeedConfirm] = useState(null);
 const [loading, setLoading] = useState(false);
 
 // modals
@@ -104,8 +104,7 @@ const loadDashBoard = async (date) => {
     const trimmed = (text ?? "").trim();
     if (!trimmed || loading) return;
 
-    setLoading(true);
-    setNeedConfirm(null);    
+    setLoading(true);  
     setInput("");
 
     const userMsgId = crypto.randomUUID();
@@ -123,7 +122,7 @@ const loadDashBoard = async (date) => {
     ])
 
     try {
-    const res = await fetch("/api/meal/message", {
+    const res = await fetch("/api/meal/item", {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -135,8 +134,6 @@ const loadDashBoard = async (date) => {
     const data = await res.json();
 
     handleServerResponse(data);
-
-    if (data.needConfirm) setNeedConfirm(data.needConfirm);
 
     const gptText = data.assistantText ?? "기록 완료";
     const gptAt = data.createdAt ?? new Date().toISOString();
@@ -178,17 +175,40 @@ const loadDashBoard = async (date) => {
   };
 
 
-  // needConfirm 버튼 핸들러
-  const handleChooseSuggestion = async (name, count) => {
-    // 선택하면 confirm UI 닫고 재전송
-    setNeedConfirm(null);
-    await sendText(`${name} ${count}개`);
-  };
-
+  //아이템 수정 모달 열기
   const openManual = (rawName, count) => {
     setManual({rawName, count, protein:"", kcal:""});
     setManualOpen(true);
   };
+
+  //아이템 삭제
+  const onDelete = async (item) => {
+
+    const result = await Swal.fire({
+      title: '정말로 삭제하시겠어요?',
+      text: "이 작업은 되돌릴 수 없어요.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: 'rgb(250, 102, 102)',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: '삭제',
+      cancelButtonText: '취소'
+    })
+
+  
+    const res = await fetch(`/api/meal/item/${item.id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    if (!res.ok) return;
+
+    const data = await res.json().catch(() => null);
+    if (data) handleServerResponse(data);
+    else loadDashBoard(selectedDate); 
+  };
+
+
 
   const submitManual = async() => {
     const protein = Number(manual.protein);
@@ -197,7 +217,6 @@ const loadDashBoard = async (date) => {
     if(!Number.isFinite(protein) || protein < 0) return;
     if(!Number.isFinite(kcal) || kcal < 0) return;
 
-    setNeedConfirm(null);
     setManualOpen(false);
 
     await fetch("/api/meal/manual", {
@@ -257,8 +276,7 @@ const loadDashBoard = async (date) => {
     setItems(res.items ?? []);
     setLogs(res.chatLog ?? []);
   }
-
-  
+ 
 
   return (
      <>
@@ -339,6 +357,7 @@ const loadDashBoard = async (date) => {
                   <th className="px-5 py-3">칼로리</th>
                   <th className="px-5 py-3">단백질</th>
                   <th className="px-5 py-3">시간</th>
+                  <th className="px-5 py-3 text-right"> </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -351,45 +370,30 @@ const loadDashBoard = async (date) => {
                     <td className="px-5 py-3 text-gray-500">
                       {it.createdAt ? dayjs(it.createdAt).format("YYYY-MM-DD HH:mm") : "-"}
                     </td>
+
+                    <td className="px-5 py-3">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => openManual(it.rawName, it.count)}
+                            className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+                            title="수정"
+                          >
+                             ✏️
+                          </button>
+
+                          <button
+                            onClick={() => onDelete(it)}
+                            className="rounded-lg border border-red-200 bg-white px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50"
+                            title="삭제"
+                          >
+                              🗑️
+                          </button>
+                        </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </div>
-        )}
-
-        {/* needConfirm */}
-        {needConfirm && (
-          <div className="border-t border-amber-100 bg-amber-50 px-5 py-4">
-            <div className="text-sm font-semibold text-amber-900">
-              ‘{needConfirm.rawName}’를 
-            </div>
-
-            <div className="mt-2 text-sm text-amber-900/80">
-              {Array.isArray(needConfirm.suggestions) && needConfirm.suggestions.length > 0
-                ? "혹시 이거였나요?"
-                : "추천 후보가 없어요."}
-            </div>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              {Array.isArray(needConfirm.suggestions) &&
-                needConfirm.suggestions.map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleChooseSuggestion(s.name, needConfirm.count)}
-                    className="rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100/50"
-                  >
-                    {s.name} ({Math.round(s.protein)}g)
-                  </button>
-                ))}
-
-              <button
-                onClick={() => openManual(needConfirm.rawName, needConfirm.count)}
-                className="rounded-xl bg-gray-900 px-3 py-2 text-sm font-semibold text-white hover:bg-gray-800"
-              >
-                그냥 추정으로 기록하기
-              </button>
-            </div>
           </div>
         )}
 
@@ -406,14 +410,14 @@ const loadDashBoard = async (date) => {
 
     <div className="mt-3 space-y-3">
 
-        {loading && (
-  <div className="flex justify-start">
-    <div className="max-w-[60%] rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-700">
-      <div className="mb-1 text-xs opacity-70">GPT</div>
-      <div className="animate-pulse">입력 중...</div>
-    </div>
-  </div>
-  )}
+    {loading && (
+      <div className="flex justify-start">
+        <div className="max-w-[60%] rounded-2xl bg-gray-100 px-4 py-3 text-sm text-gray-700">
+          <div className="mb-1 text-xs opacity-70">GPT</div>
+          <div className="animate-pulse">입력 중...</div>
+        </div>
+      </div>
+    )}
  
 
       {logs.map((log, idx) => {
