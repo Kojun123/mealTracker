@@ -6,8 +6,8 @@ import GoalSettingModal from "./components/GoalSettingModal";
 import DashboardHeader from "./components/DashboardHeader";
 import StatsCards from "./components/StatsCards";
 import Composer from "./components/Composer";
-import DatePickerChip from "./components/DatePickerChip";
 import Swal from "sweetalert2";
+import DatePopover from "./components/DatePopover";
 
 
 function Dashboard() {
@@ -38,6 +38,7 @@ const [toast, setToast] = useState(null);
 
 //datepicker
 const [selectedDate, setSelectedDate] = useState(dayjs().format("YYYY-MM-DD"));
+const [dateOpen, setDateOpen] = useState(false);
 
 
 
@@ -70,8 +71,19 @@ useEffect(() => {
 }, [user]);
 
 useEffect(() => {
+  console.log("selectedDate changed", selectedDate);
   loadDashBoard(selectedDate);
 }, [selectedDate]);
+
+useEffect(() => {
+  const handler = (e) => {
+    if(!e.target.closest?.("[data-date-popover]")) {
+      setDateOpen(false);
+    }
+  };
+  if(dateOpen) document.addEventListener("mousedown", handler);
+  return () => document.removeEventListener("mousedown", handler);
+}, [dateOpen])
 //=======================useEffect=======================
 
 const showToast = (type, message) => {
@@ -351,15 +363,15 @@ const loadDashBoard = async (date) => {
       />
 
       {/* Items table */}
-      <section className="mt-6 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <section className="mt-6 rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="flex items-center justify-between px-5 py-4">
           <h2 className="text-base font-semibold text-gray-900">오늘 먹은 것</h2>
-          
-          <DatePickerChip
-              value={selectedDate}
-              onChange={setSelectedDate}
-            />
 
+           <DatePopover
+              selectedDate={selectedDate}
+              setSelectedDate={setSelectedDate}
+           />
+          
         </div>
 
         {items.length === 0 ? (
