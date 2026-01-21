@@ -21,3 +21,32 @@ mybatis:
 openai:
   apiKey: ${OPENAI_API_KEY}
   model: gpt-5.2
+
+logging:
+  level:
+    root: INFO
+
+    # ===== Spring Framework =====
+    org.springframework: INFO
+    org.springframework.web: INFO
+
+    # ===== Spring Security =====
+    org.springframework.security: DEBUG
+    org.springframework.security.authentication: DEBUG
+    org.springframework.security.web.authentication: DEBUG
+
+    # ===== DB =====
+    org.mybatis: DEBUG
+    org.mybatis.spring: DEBUG
+    org.springframework.jdbc.core: DEBUG
+    com.zaxxer.hikari: INFO
+
+    # ===== 네 프로젝트 패키지 =====
+    com.example: DEBUG
+
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
+
+
+
+
