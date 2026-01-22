@@ -12,7 +12,7 @@ pipeline {
         sh '''
           set -e
           docker run --rm \
-            -v "$PWD:/w" -w /w/backend/meatTracker \
+            -v "$WORKSPACE:/w" -w /w/backend/meatTracker \
             gradle:8-jdk21 \
             bash -lc "./gradlew clean bootJar"
         '''
@@ -24,7 +24,7 @@ pipeline {
         sh '''
           set -e
           docker run --rm \
-            -v "$PWD:/w" -w /w/frontend \
+            -v "$WORKSPACE:/w" -w /w/frontend \
             node:20 \
             bash -lc "npm ci && npm run build"
         '''
@@ -38,7 +38,6 @@ pipeline {
           JAR_PATH=$(ls -1 backend/meatTracker/build/libs/*.jar | head -n 1)
           echo "JAR=$JAR_PATH"
 
-          # 아래 두 경로는 네 배포폴더 구조에 맞춰 조정
           mkdir -p "${DEPLOY_DIR}/spring"
           cp -f "$JAR_PATH" "${DEPLOY_DIR}/spring/app.jar"
 
