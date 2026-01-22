@@ -5,10 +5,7 @@ pipeline {
   }
   options { timestamps() }
 
-  stages {
-    stage('Checkout') {
-      steps { checkout scm }
-    }
+  stages {    
 
     stage('Build Backend') {
       steps {
