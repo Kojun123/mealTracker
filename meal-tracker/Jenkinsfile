@@ -8,17 +8,18 @@ pipeline {
   stages {    
 
     stage('Build Backend') {
-      steps {
-        sh '''
-          set -e
-          docker run --rm \
-            -v "$WORKSPACE:/w" \
-            -w /w/meal-tracker/backend/meatTracker \
-            gradle:8-jdk21 \
-            bash -lc `chmod +x gradlew && sed -i 's/\\r$//' gradlew && ./gradlew clean bootJar`
-        '''
-      }
-    }
+  steps {
+    sh '''
+      set -e
+      docker run --rm \
+        -v "$WORKSPACE:/w" \
+        -w /w/meal-tracker/backend/meatTracker \
+        gradle:8-jdk21 \
+        bash -c 'ls -al && chmod +x ./gradlew && sed -i "s/\\r$//" ./gradlew && ./gradlew clean bootJar'
+    '''
+  }
+}
+
 
     stage('Build Frontend') {
       steps {
