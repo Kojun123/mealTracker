@@ -1,0 +1,65 @@
+pipeline {
+  agent any
+  environment {
+    DEPLOY_DIR = "/opt/meal-docker"
+  }
+  options { timestamps() }
+
+  stages {
+    stage('Checkout') {
+      steps { checkout scm }
+    }
+
+    stage('Build Backend') {
+      steps {
+        sh '''
+          set -e
+          docker run --rm \
+            -v "$PWD:/w" -w /w/backend/meatTracker \
+            gradle:8-jdk21 \
+            bash -lc "./gradlew clean bootJar"
+        '''
+      }
+    }
+
+    stage('Build Frontend') {
+      steps {
+        sh '''
+          set -e
+          docker run --rm \
+            -v "$PWD:/w" -w /w/frontend \
+            node:20 \
+            bash -lc "npm ci && npm run build"
+        '''
+      }
+    }
+
+    stage('Deploy Files') {
+      steps {
+        sh '''
+          set -e
+          JAR_PATH=$(ls -1 backend/meatTracker/build/libs/*.jar | head -n 1)
+          echo "JAR=$JAR_PATH"
+
+          # 아래 두 경로는 네 배포폴더 구조에 맞춰 조정
+          mkdir -p "${DEPLOY_DIR}/spring"
+          cp -f "$JAR_PATH" "${DEPLOY_DIR}/spring/app.jar"
+
+          rm -rf "${DEPLOY_DIR}/nginx/html"
+          mkdir -p "${DEPLOY_DIR}/nginx/html"
+          cp -r frontend/dist/* "${DEPLOY_DIR}/nginx/html/"
+        '''
+      }
+    }
+
+    stage('Compose Up') {
+      steps {
+        sh '''
+          set -e
+          cd /opt/meal-docker
+          docker compose up -d --build spring nginx
+        '''
+      }
+    }
+  }
+}
