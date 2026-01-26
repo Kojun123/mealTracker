@@ -13,12 +13,12 @@ import java.util.List;
 @NoArgsConstructor
 public class TodayResponse {
 
-    private TodaySummary summary;
+    private TodaySummary todaySummary;
     private List<MealItem> items;
     private List<MealLogResponse> chatLog;
 
-    public TodayResponse(TodaySummary summary, List<MealItem> items, List<MealLogResponse> chatLog) {
-        this.summary = summary;
+    public TodayResponse(TodaySummary todaySummary, List<MealItem> items, List<MealLogResponse> chatLog) {
+        this.todaySummary = todaySummary;
         this.items = items;
         this.chatLog = chatLog;
     }

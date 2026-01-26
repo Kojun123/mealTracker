@@ -60,7 +60,6 @@ useEffect(() => {
     setUser(data);
     console.log("user", data);
     
-    loadDashBoard();
   })();
 }, []);
 
@@ -106,9 +105,8 @@ const loadDashBoard = async (date) => {
 
     const data = await res.json();
     console.log("dashboard data", data);
-    setSummary(data.todaySummary);
-    setItems(data.items ?? []);
-    setLogs(data.chatLog ?? []);
+
+    handleServerResponse(data);
     setSession(data.session);
 };
 
