@@ -74,15 +74,16 @@ useEffect(() => {
   loadDashBoard(selectedDate);
 }, [selectedDate]);
 
-useEffect(() => {
-  const handler = (e) => {
-    if(!e.target.closest?.("[data-date-popover]")) {
-      setDateOpen(false);
-    }
-  };
-  if(dateOpen) document.addEventListener("mousedown", handler);
-  return () => document.removeEventListener("mousedown", handler);
-}, [dateOpen])
+
+// useEffect(() => {
+//   const handler = (e) => {
+//     if(!e.target.closest?.("[data-date-popover]")) {
+//       setDateOpen(false);
+//     }
+//   };
+//   if(dateOpen) document.addEventListener("mousedown", handler);
+//   return () => document.removeEventListener("mousedown", handler);
+// }, [dateOpen])
 //=======================useEffect=======================
 
 const showToast = (type, message) => {

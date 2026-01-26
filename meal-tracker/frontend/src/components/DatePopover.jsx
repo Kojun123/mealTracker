@@ -33,7 +33,14 @@ export default function DatePopover({ selectedDate, setSelectedDate }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-2 z-20 rounded-2xl border border-gray-200 bg-white p-3 shadow-lg">
+        <div 
+          className="fixed inset-0 z-20 flex items-center justify-center p-3 sm:absolute sm:inset-auto sm:right-0 sm:mt-2"
+          onMouseDown={() => setOpen(false)}
+        >
+          <div
+           className="w-[min(22rem,calc(100vw-1.5rem))] select-none rounded-2xl border border-gray-200 bg-white p-3 shadow-lg"
+            onMouseDown={(e) => e.stopPropagation()}
+          >
           <DayPicker
             mode="single"
             selected={selected}
@@ -43,6 +50,7 @@ export default function DatePopover({ selectedDate, setSelectedDate }) {
               setOpen(false);
             }}
           />
+          </div>
         </div>
       )}
     </div>
