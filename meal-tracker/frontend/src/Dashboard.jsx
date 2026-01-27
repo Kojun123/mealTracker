@@ -8,6 +8,7 @@ import StatsCards from "./components/StatsCards";
 import Composer from "./components/Composer";
 import Swal from "sweetalert2";
 import DatePopover from "./components/DatePopover";
+import { apiFetch } from "./lib/apiFetch";
 
 
 function Dashboard() {
@@ -45,7 +46,7 @@ const [dateOpen, setDateOpen] = useState(false);
 //=======================useEffect=======================
 useEffect(() => {
   (async () => {
-    const user = await fetch("/api/auth/me", {
+    const user = await apiFetch("/api/auth/me", {
         credentials: "include",
         method: "POST",
         headers: { "Content-Type" : "application/json" }
@@ -93,7 +94,7 @@ const showToast = (type, message) => {
 
 const loadDashBoard = async (date) => {
   if (!date) date = dayjs().format("YYYY-MM-DD");
-    const res = await fetch(`/api/meal/today?date=${date}`, {
+    const res = await apiFetch(`/api/meal/today?date=${date}`, {
       credentials: "include",
       method: "POST",
       headers: { "Content-Type": "application/json" }
@@ -133,7 +134,7 @@ const loadDashBoard = async (date) => {
     ])
 
     try {
-    const res = await fetch("/api/meal/item", {
+    const res = await apiFetch("/api/meal/item", {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -202,7 +203,7 @@ const loadDashBoard = async (date) => {
 
     if(!result.isConfirmed) return;
     
-    const res = await fetch(`/api/meal/item/${item.id}`, {
+    const res = await apiFetch(`/api/meal/item/${item.id}`, {
       method: "DELETE",
       credentials: "include",
     });
@@ -227,7 +228,7 @@ const loadDashBoard = async (date) => {
       return;
     }
 
-      const res = await fetch("/api/auth/target", {
+      const res = await apiFetch("/api/auth/target", {
     method: "PUT",
     credentials: "include",
     headers: { "Content-Type": "application/json" },
@@ -285,7 +286,7 @@ const loadDashBoard = async (date) => {
       return;
     }
 
-    const res = await fetch(`/api/meal/item/${editItem.id}`, {
+    const res = await apiFetch(`/api/meal/item/${editItem.id}`, {
       method: "PUT",
       credentials: "include",
       headers: {"Content-Type": "application/json"},
@@ -353,7 +354,7 @@ const loadDashBoard = async (date) => {
         user={user}
         onOpenGoal={() => setGoalOpen(true)}
         onLogout={async () => {
-          await fetch("/api/auth/logout", {method: "POST", credentials: "include"}).catch(() => {});
+          await apiFetch("/api/auth/logout", {method: "POST", credentials: "include"}).catch(() => {});
           navigate("/login");
         }}
       />

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch, setAccessToken } from "./lib/apiFetch";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -13,21 +14,19 @@ export default function Login() {
     setErr(null);
     setLoading(true);
 
-    try {
-      const res = await fetch("/api/auth/login", {
+    try {      
+      const res = await apiFetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({ email, password }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
         credentials: "include",
-      });
+      });     
 
-      if (res.status === 200) {
-        navigate("/");
-        return;
-      }
-
-      setErr("이메일 또는 비밀번호가 틀림");
-    } catch {
+      const data = await res.json();
+      setAccessToken(data.accessToken);      
+      navigate("/");
+    } catch(e) {      
+      console.error(e?.message);
       setErr("네트워크 오류");
     } finally {
       setLoading(false);

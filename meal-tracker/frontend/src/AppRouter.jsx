@@ -1,6 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import Dashboard from "./Dashboard";
-import Signup from "./components/Signup";
+import Signup from "./Signup";
 import Login from "./Login"; 
 
 export default function AppRouter() {

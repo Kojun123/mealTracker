@@ -1,5 +1,6 @@
 import {useState} from "react";
 import {useNavigate, Link} from "react-router-dom"
+import { apiFetch } from "./lib/apiFetch";
 
 export default function Signup() {
     const navigate = useNavigate();
@@ -21,7 +22,7 @@ export default function Signup() {
         
         setLoading(true);
         try {
-            const res = await fetch("/api/auth/signup", {
+            const res = await apiFetch("/api/auth/signup", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: e1, password }),
