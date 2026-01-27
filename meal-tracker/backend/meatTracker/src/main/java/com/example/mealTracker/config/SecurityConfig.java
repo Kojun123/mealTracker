@@ -1,11 +1,19 @@
 package com.example.mealTracker.config;
 
+import com.example.mealTracker.common.JwtAuthFilter;
+import com.example.mealTracker.common.JwtProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -18,37 +26,36 @@ import java.util.List;
 public class SecurityConfig {
 
     @Bean
-    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .cors(cors -> {})
+    public JwtProvider jwtProvider(
+            @Value("${app.jwt.secret}") String secret,
+            @Value("${app.jwt.access-minutes}") long accessMinutes,
+            @Value("${app.jwt.refresh-days}") long refreshDays
+    ) {
+        return new JwtProvider(secret, accessMinutes, refreshDays);
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManagerBean(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http, JwtProvider jwtProvider) throws Exception {
+        return http
+                .cors(comrs -> {})
                 .csrf(csrf -> csrf.disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint((req, res, ex) -> res.sendError(401))
+                        .accessDeniedHandler((req, res, ex) -> res.sendError(403))
+                )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/refresh", "/api/auth/logout").permitAll()
                         .anyRequest().authenticated()
                 )
-                .formLogin(form -> form
-                        .loginProcessingUrl("/api/auth/login")
-                        .usernameParameter("email")
-                        .passwordParameter("password")
-                        .successHandler((req, res, auth) -> {
-                            res.setStatus(200);
-                        })
-                        .failureHandler((req, res, e) -> {
-                            res.setStatus(401);
-                        })
-                )
-                .logout(logout -> logout
-                        .logoutUrl("/api/auth/logout")
-                        .logoutSuccessHandler((req, res, auth) -> {
-                            res.setStatus(200);
-                        })
-                )
-                .exceptionHandling(e -> e
-                        .authenticationEntryPoint((req, res, e1) -> {
-                            res.sendError(401);
-                }));
-
-                return http.build();
+                .addFilterBefore(new JwtAuthFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
 
     @Bean
@@ -58,6 +65,7 @@ public class SecurityConfig {
         config.setAllowedOriginPatterns(List.of("http://localhost:5173", "http://54.116.25.255", "https://54.116.25.255", "https://juntodo.site"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        config.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

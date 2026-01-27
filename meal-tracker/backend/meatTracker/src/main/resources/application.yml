@@ -1,6 +1,12 @@
 server:
   port: 8080
 
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-minutes: 15
+    refresh-days: 14
+
 spring:
   application:
     name: meal-tracker
@@ -25,6 +31,8 @@ openai:
 logging:
   level:
     root: INFO
+
+
 
     # ===== Spring Framework =====
     org.springframework: INFO

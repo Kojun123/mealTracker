@@ -90,8 +90,9 @@ public class MealService {
     }
 
     public MealMessageResponse buildResponse(String assistantText, String userId) {
-        TodaySummary summary = calcSummary(userId);
         LocalDate now = LocalDate.now(ZoneId.of("Asia/Seoul"));
+
+        TodaySummary summary = calcSummary(userId, now);
 
         return MealMessageResponse.normal(
                 assistantText + "\n" + remainText(summary),
@@ -102,12 +103,13 @@ public class MealService {
     }
 
     // 오늘의 칼로리 계산
-    public TodaySummary calcSummary(String userId) {
+    public TodaySummary calcSummary(String userId, LocalDate date) {
         double totalCal = 0;
         double totalPro = 0;
-        LocalDate now = LocalDate.now(ZoneId.of("Asia/Seoul"));
 
-        for (MealItem it : mealItemMapper.findItemsByUser(userId, now)) {
+        if (date == null) date = LocalDate.now(ZoneId.of("Asia/Seoul"));
+
+        for (MealItem it : mealItemMapper.findItemsByUser(userId, date)) {
             totalCal += it.getCalories();
             totalPro += it.getProtein();
         }
@@ -133,7 +135,7 @@ public class MealService {
             return TodayResponse.empty();
         }
 
-        TodaySummary summary = calcSummary(userId);
+        TodaySummary summary = calcSummary(userId, date);
         List<MealItem> items = findItemsBySessionId(userId, date);
         List<MealLogResponse> chatLog = mealLogMapper.getChatLogs(userId, date);
 
