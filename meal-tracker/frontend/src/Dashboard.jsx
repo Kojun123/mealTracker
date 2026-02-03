@@ -6,6 +6,7 @@ import GoalSettingModal from "./components/GoalSettingModal";
 import DashboardHeader from "./components/DashboardHeader";
 import StatsCards from "./components/StatsCards";
 import Composer from "./components/Composer";
+import FavoriteBottomSheet from "./components/FavoriteBottomSheet";
 import Swal from "sweetalert2";
 import DatePopover from "./components/DatePopover";
 import { apiFetch, setAccessToken } from "./lib/apiFetch";
@@ -39,6 +40,37 @@ const [toast, setToast] = useState(null);
 //datepicker
 const [selectedDate, setSelectedDate] = useState(dayjs().format("YYYY-MM-DD"));
 
+const [favSheetOpen, setFavSheetOpen] = useState(false);
+
+const [favorites, setFavorites] = useState([]);
+
+const loadFavorites = async () => {
+  const res = await apiFetch("/api/meal/favorite", {
+    method: "GET",
+    credentials: "include"
+  });
+
+  if (res.status === 401){
+    navigate("/login");
+    return;
+  }
+
+  if (!res.ok) return ;
+
+  const data = await res.json().catch(() => []);
+  setFavorites(Array.isArray(data)? data : (data.items ?? []));
+
+};
+
+const recentItems = (items ?? [])
+  .slice()
+  .sort((a, b) => new Date(b.createdAt ?? 0) - new Date(a.createdAt ?? 0))
+  .map((it) => it.name)
+  .filter(Boolean)
+  .filter((v, i, arr) => arr.indexOf(v) === i)
+  .slice(0, 8);
+
+
 
 //=======================useEffect=======================
 useEffect(() => {
@@ -65,6 +97,7 @@ useEffect(() => {
   if (!user) return;
   setTargetCalories(user.targetCalories ?? 2000);
   setTargetProtein(user.targetProtein ?? 150);
+  loadFavorites();
 }, [user]);
 
 useEffect(() => {
@@ -72,16 +105,6 @@ useEffect(() => {
   loadDashBoard(selectedDate);
 }, [selectedDate]);
 
-
-// useEffect(() => {
-//   const handler = (e) => {
-//     if(!e.target.closest?.("[data-date-popover]")) {
-//       setDateOpen(false);
-//     }
-//   };
-//   if(dateOpen) document.addEventListener("mousedown", handler);
-//   return () => document.removeEventListener("mousedown", handler);
-// }, [dateOpen])
 //=======================useEffect=======================
 
 const showToast = (type, message) => {
@@ -170,16 +193,13 @@ const loadDashBoard = async (date) => {
 
   };
 
-  const send = async () => {
-    const text = input.trim();
+  const send = async (textArg) => {
+    const text = (textArg ?? input).trim();
     if (!text || loading) return;
 
     setLoading(true);
-    try {
-      await sendText(text);
-    } finally {
-      setLoading(false);
-    }    
+    
+    await sendText(text);      
   };
 
   //아이템 삭제
@@ -334,6 +354,14 @@ const loadDashBoard = async (date) => {
         onClose={() => setGoalOpen(false)}
         onSave={saveGoal}
       />
+
+        <FavoriteBottomSheet
+  open={favSheetOpen}
+  onClose={() => setFavSheetOpen(false)}
+  favorites={favorites}
+  setFavorites={setFavorites}
+  reloadFavorites={loadFavorites}
+/>
 
       {/* toast */}
       {toast && (
@@ -521,7 +549,15 @@ const loadDashBoard = async (date) => {
         <div className="border-t border-white/10" />
 
         <div className="p-4 sm:p-5">
-          <Composer input={input} setInput={setInput} onSend={send} loading={loading} />
+          <Composer
+              input={input}
+              setInput={setInput}
+              onSend={send}
+              loading={loading}
+              recentItems={recentItems}
+              favorites={favorites}
+              onOpenFavoritesSheet={() => setFavSheetOpen(true)}
+          />
         </div>
       </section>
 
@@ -577,6 +613,9 @@ const loadDashBoard = async (date) => {
       </div>
     </div>
   </div>
+
+
+
 );
 
 
