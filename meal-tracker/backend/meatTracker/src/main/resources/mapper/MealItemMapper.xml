@@ -47,4 +47,22 @@
         DELETE FROM meal_item WHERE user_id = #{userId} and id = #{itemId}
     </delete>
 
+    <select id="findFavoritesByUser" resultType="com.example.mealTracker.dto.FavoriteMealResponse">
+        select
+            *
+        from meal_favorite
+        where user_id = #{userId}
+        order by
+        sort_order, created_at asc
+    </select>
+
+    <insert id="insertFavorites" parameterType="com.example.mealTracker.domain.MealFavorite" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO meal_favorite (id, name, user_id, protein, calories)
+        VALUES (#{id}, #{name}, #{userId}, #{protein}, #{calories})
+    </insert>
+
+    <delete id="deleteFavorites" parameterType="com.example.mealTracker.domain.MealFavorite">
+        DELETE FROM meal_favorite WHERE user_id = #{userId} and id = #{id}
+    </delete>
+
 </mapper>

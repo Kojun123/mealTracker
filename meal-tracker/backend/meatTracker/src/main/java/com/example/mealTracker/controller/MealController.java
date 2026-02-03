@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/meal")
@@ -55,6 +56,28 @@ public class MealController {
         String userId = (String) authentication.getPrincipal();
         vo.setEmail(userId);
         mealService.insertLog(vo);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/favorite")
+    public ResponseEntity<List<FavoriteMealResponse>> getFavoriteMeal (Authentication authentication) {
+        String userId = (String) authentication.getPrincipal();
+        return ResponseEntity.ok(mealService.getFavoriteMeals(userId));
+    }
+
+    @PostMapping("/favorite")
+    public ResponseEntity<Void> addFavoriteMeal (Authentication authentication, @RequestBody FavoriteMealRequest vo) {
+        String userId = (String) authentication.getPrincipal();
+        vo.setUserId(userId);
+        mealService.insertFavoriteMeal(vo);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/favorite")
+    public ResponseEntity<Void> deleteFavoriteMeal (Authentication authentication, @RequestBody FavoriteMealRequest vo) {
+        String userId = (String) authentication.getPrincipal();
+        vo.setUserId(userId);
+        mealService.deleteFavoriteMeal(vo);
         return ResponseEntity.ok().build();
     }
 

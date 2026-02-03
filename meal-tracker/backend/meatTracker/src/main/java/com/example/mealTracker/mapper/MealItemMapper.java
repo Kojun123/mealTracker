@@ -1,7 +1,10 @@
 package com.example.mealTracker.mapper;
 
+import com.example.mealTracker.domain.MealFavorite;
 import com.example.mealTracker.domain.MealItem;
 import com.example.mealTracker.domain.TodaySummary;
+import com.example.mealTracker.dto.FavoriteMealRequest;
+import com.example.mealTracker.dto.FavoriteMealResponse;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -13,6 +16,11 @@ public interface MealItemMapper {
     int insertItem(MealItem item);
     int deleteItem(@Param("userId") String userId, @Param("itemId") Long itemId);
     int updateItem(MealItem item);
+
     List<MealItem> findItemsByUser(@Param("userId") String userId, @Param("mealDate") LocalDate date);
     TodaySummary findSummaryByUser(@Param("userId") String userId);
+
+    List<FavoriteMealResponse> findFavoritesByUser(@Param("userId") String userId);
+    int insertFavorites(MealFavorite item);
+    int deleteFavorites(MealFavorite item);
 }

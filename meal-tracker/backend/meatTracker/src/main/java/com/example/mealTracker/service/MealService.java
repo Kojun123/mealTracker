@@ -154,8 +154,23 @@ public class MealService {
         if (updated == 0) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
     }
 
+    public List<FavoriteMealResponse> getFavoriteMeals(String userId) {
+        return mealItemMapper.findFavoritesByUser(userId);
+    }
 
+    public void insertFavoriteMeal(FavoriteMealRequest vo) {
+        MealFavorite item = vo.toEntity();
+        int i = mealItemMapper.insertFavorites(item);
 
+        if (i == 0) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
+
+    public void deleteFavoriteMeal(FavoriteMealRequest vo) {
+        MealFavorite item = vo.toEntity();
+        int i = mealItemMapper.deleteFavorites(item);
+
+        if (i == 0) throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+    }
 
 
 
