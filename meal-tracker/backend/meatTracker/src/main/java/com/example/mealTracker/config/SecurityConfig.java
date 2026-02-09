@@ -76,7 +76,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
-        config.setAllowedOriginPatterns(List.of("http://localhost:5173", "http://54.116.25.255", "https://54.116.25.255", "https://juntodo.site"));
+        config.setAllowedOriginPatterns(List.of("http://localhost:5173", "http://54.116.25.255", "https://54.116.25.255", "https://junmeal.com"));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setMaxAge(3600L);
