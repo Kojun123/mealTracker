@@ -1,4 +1,4 @@
-# Meal Tracker 
+# Meal Tracker
 
 https://juntodo.site
 
@@ -10,11 +10,11 @@ https://juntodo.site
 ## 핵심 기능
 
 * **빠른 기록**
-
-  *  먹은거 대충 던지면 ai가 파싱하고 분석해서 결과 저장, 음식 모호해도 알아서 추정하는게 핵심 포인트, 기록된 음식 성분을 직접 수정도 가능
+  * 먹은 거 대충 던지면 AI가 파싱하고 분석해서 결과 저장
+  * 음식이 모호해도 알아서 추정하는 것이 핵심 포인트
+  * 기록된 음식 성분을 직접 수정 가능
 
 * **즐겨찾기(Favorites)**
-
   * 자주 먹는 음식 저장
   * 칼로리·단백질 입력
   * 클릭 시 입력창 토큰으로 추가
@@ -22,35 +22,30 @@ https://juntodo.site
   * x 버튼으로 즉시 제거
 
 * **최근 먹은 것**
-
   * 오늘 기록 기준 최근 항목 한 줄 노출
   * 클릭 시 토큰으로 추가
 
 * **대시보드**
-
   * 오늘 섭취 요약(칼로리/단백질)
   * 날짜 선택
   * 기록 수정/삭제
 
 * **기타**
-  * OAuth2 기반 소셜 로그인  
+  * OAuth2 기반 소셜 로그인
 
 ---
 
 ## 기술 스택
 
 ### Frontend
-
 * React (Vite)
 
 ### Backend
-
 * Spring Boot
 * MyBatis
 * MySQL
 
 ### Infra
-
 * Docker
 * Jenkins
 * AWS EC2
@@ -64,20 +59,42 @@ https://juntodo.site
 * 즐겨찾기 바텀시트에서 관리
 * 다크 테마 기준 가독성 최적화
 
----
-
-## DB 설계
-
-### 사진자리
 
 ---
 
 ## 대략적인 화면 소개
 
-* 대시보
 <img width="1772" height="1272" alt="image" src="https://github.com/user-attachments/assets/3a7ca604-58eb-4b48-8314-20ca8f92d97e" />
 
-* 즐겨찾기 정렬(sort_order)은 추후 드래그 정렬 확장 가능
+<img width="1780" height="922" alt="image" src="https://github.com/user-attachments/assets/2dad08f0-ca69-4f0c-95a7-b9eb5db7cc8f" />
 
 ---
+
+## 배포 절차
+
+GitHub push
+→ Jenkins 트리거
+→ 코드 체크아웃
+→ 빌드
+→ Docker 이미지 생성
+→ 기존 컨테이너 중지
+→ 새 컨테이너 실행
+→ 서비스 정상 기동
+
+---
+
+## Backend 실행
+
+### 요구사항
+* Java 21
+* MySQL
+* OpenAI API 키
+
+### 환경 변수
+* `JWT_SECRET`
+* `DB_USERNAME`
+* `DB_PASSWORD`
+* `GOOGLE_CLIENT_ID`
+* `GOOGLE_CLIENT_SECRET`
+* `OPENAI_API_KEY`
 
