@@ -1,6 +1,6 @@
-# Meal Tracker
+# JunMealTracker
 
-https://juntodo.site
+https://junmeal.com
 
 간단한 입력으로 오늘 먹은 음식을 기록하고 칼로리·단백질을 관리하는 개인용 식단 트래커입니다. 즐겨찾기와 빠른 입력 UX를 중심으로 설계되었습니다.
 개인 프로젝트로 본인의 실사용을 중심으로 개발되었으며 지속적으로 개선 중인 프로젝트입니다.
